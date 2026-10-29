@@ -344,17 +344,24 @@ p {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fff;
+  padding: 12px;
+  background: #fff9e6;
+  border: 2px solid #ffcb05;
+  box-sizing: border-box;
 }
 
 .cara.detras img {
+  width: 80%;
+  height: 80%;
   object-fit: contain;
-  padding: 8px;
+  image-rendering: pixelated;
 }
 
 .carta-box.adivinado {
   pointer-events: none;
-  outline: 3px solid var(--success);
-  border-radius: 8px;
-  opacity: 0.85;
+}
+
+.carta-box.adivinado .cara.detras {
+  background: #ecfdf5;
+  border-color: #16a34a;
 }
