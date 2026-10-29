@@ -159,7 +159,6 @@ p {
 }
 
 .icon-btn {
-  margin-left: auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -170,10 +169,23 @@ p {
   border-radius: 6px;
   background: transparent;
   color: var(--text-muted);
+  font: inherit;
+  font-size: 1.35rem;
+  line-height: 1;
   cursor: pointer;
 }
 
+.favorite-preview .icon-btn {
+  margin-left: auto;
+}
+
 .icon-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: #eff6ff;
+}
+
+#clear-favorite:hover {
   color: var(--error);
   border-color: var(--error);
   background: #fef2f2;
@@ -244,10 +256,28 @@ p {
   text-transform: capitalize;
 }
 
-.game-placeholder {
-  color: var(--text-muted);
-  padding: 40px 0;
-  text-align: center;
+.game-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+}
+
+.game-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.game-controls select {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  width: 120px;
+  background: var(--surface);
 }
 
 .memory-board {
@@ -263,60 +293,68 @@ p {
   }
 }
 
-.memory-card {
-  aspect-ratio: 3 / 4;
-  perspective: 800px;
-  cursor: pointer;
-  border: none;
-  padding: 0;
-  background: transparent;
-}
-
-.memory-card-inner {
-  position: relative;
+/* flip de carta (clic, no hover) */
+.carta-box {
   width: 100%;
-  height: 100%;
-  transition: transform 0.4s;
-  transform-style: preserve-3d;
+  aspect-ratio: 3 / 4;
+  position: relative;
+  perspective: 1000px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-.memory-card.flipped .memory-card-inner,
-.memory-card.matched .memory-card-inner {
+.carta-box img {
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+.carta-box.girada .carta,
+.carta-box.adivinado .carta {
   transform: rotateY(180deg);
 }
 
-.memory-card-face {
+.carta {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: all 0.5s linear;
+}
+
+.cara {
   position: absolute;
   inset: 0;
   backface-visibility: hidden;
   border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow);
   overflow: hidden;
-}
-
-.memory-card-back {
-  background: var(--card-back);
-}
-
-.memory-card-front {
+  box-shadow: var(--shadow);
   background: var(--surface);
-  transform: rotateY(180deg);
 }
 
-.memory-card-front img {
+.cara img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
-.memory-card.matched {
+.cara.detras {
+  transform: rotateY(180deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+}
+
+.cara.detras img {
+  object-fit: contain;
+  padding: 8px;
+}
+
+.carta-box.adivinado {
   pointer-events: none;
-  opacity: 0.7;
-}
-
-.memory-card.matched .memory-card-front {
   outline: 3px solid var(--success);
+  border-radius: 8px;
+  opacity: 0.85;
 }
