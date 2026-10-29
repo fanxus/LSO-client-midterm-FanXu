@@ -11,7 +11,7 @@
   --card-back: #1e3a5f;
   --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
-  font-family: system-ui, 'Segoe UI', sans-serif;
+  font-family: system-ui, "Segoe UI", sans-serif;
   line-height: 1.5;
   color: var(--text);
   background: var(--bg);
@@ -41,6 +41,37 @@ h1,
 h2,
 p {
   margin: 0;
+}
+
+/* ——— Botones ——— */
+.btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn:hover {
+  background: var(--accent-hover);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--border);
 }
 
 /* ——— Perfil ——— */
@@ -75,6 +106,14 @@ p {
   font: inherit;
   font-weight: 400;
   background: var(--surface);
+}
+
+.field-error {
+  color: var(--error);
+  min-height: 1.2em;
+  font-size: 0.85rem;
+  font-weight: 400;
+  margin: 0;
 }
 
 .pokemon-list {
@@ -134,76 +173,7 @@ p {
   font-weight: 600;
 }
 
-.field-error,
-.profile-error {
-  color: var(--error);
-  min-height: 1.2em;
-  font-size: 0.85rem;
-  font-weight: 400;
-  margin: 0;
-}
-
-.game-player {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.game-player-avatar {
-  width: 56px;
-  height: 56px;
-  object-fit: contain;
-  background: var(--surface);
-  border-radius: 8px;
-  border: 1px solid var(--border);
-}
-
-.game-player h1 {
-  text-transform: none;
-  font-size: 1.25rem;
-}
-
-.game-stats span {
-  text-transform: capitalize;
-}
-
-.game-placeholder {
-  color: var(--text-muted);
-  padding: 40px 0;
-  text-align: center;
-}
-
-/* ——— Botones ——— */
-.btn {
-  padding: 10px 16px;
-  border: none;
-  border-radius: 6px;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-  background: var(--accent);
-  color: #fff;
-}
-
-.btn:hover {
-  background: var(--accent-hover);
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-secondary {
-  background: transparent;
-  color: var(--text);
-  border: 1px solid var(--border);
-}
-
-.btn-secondary:hover {
-  background: var(--border);
-}
-
+/* ——— Juego ——— */
 .game-page {
   flex: 1;
   display: flex;
@@ -223,11 +193,40 @@ p {
   flex-wrap: wrap;
 }
 
+.game-player {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.game-player-avatar {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  background: var(--surface);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.game-player h1 {
+  font-size: 1.25rem;
+}
+
 .game-stats {
   display: flex;
   gap: 16px;
   color: var(--text-muted);
   font-size: 0.95rem;
+}
+
+.game-stats span {
+  text-transform: capitalize;
+}
+
+.game-placeholder {
+  color: var(--text-muted);
+  padding: 40px 0;
+  text-align: center;
 }
 
 .memory-board {

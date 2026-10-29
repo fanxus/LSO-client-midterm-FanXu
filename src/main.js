@@ -6,17 +6,15 @@ import { renderGame } from "./pages/game.js";
 const app = document.querySelector("#app");
 
 function showGame(session) {
-  renderGame(app, session, {
+  renderGame(app, {
+    session,
     onLogout: showProfile,
   });
 }
 
 function showProfile() {
   renderProfile(app, {
-    onProfileCreated: () => {
-      const session = getSession();
-      if (session) showGame(session);
-    },
+    onProfileCreated: showGame,
   });
 }
 

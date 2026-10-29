@@ -19,6 +19,16 @@ function validateUsername(username) {
   return null;
 }
 
+function validateFavorite(selected) {
+  if (!selected) {
+    return "Select a favorite Pokémon.";
+  }
+  if (!selected.image) {
+    return "That Pokémon has no image. Pick another one.";
+  }
+  return null;
+}
+
 export async function renderProfile(container, { onProfileCreated }) {
   container.innerHTML = `
     <div class="profile-page">
@@ -45,6 +55,7 @@ export async function renderProfile(container, { onProfileCreated }) {
           placeholder="Type a name…"
           autocomplete="off"
         />
+        <p id="pokemon-error" class="field-error" role="alert"></p>
       </div>
 
       <ul id="pokemon-list" class="pokemon-list"></ul>
@@ -54,23 +65,21 @@ export async function renderProfile(container, { onProfileCreated }) {
         <p id="favorite-name"></p>
       </div>
 
-      <p id="profile-error" class="profile-error" role="alert"></p>
-
       <button type="button" class="btn" id="create-profile">
         Create Profile
       </button>
     </div>
   `;
 
+  const usernameInput = container.querySelector("#username");
+  const usernameErrorEl = container.querySelector("#username-error");
   const searchInput = container.querySelector("#search");
+  const pokemonErrorEl = container.querySelector("#pokemon-error");
   const listEl = container.querySelector("#pokemon-list");
   const preview = container.querySelector("#favorite-preview");
   const favoriteImg = container.querySelector("#favorite-img");
   const favoriteName = container.querySelector("#favorite-name");
   const createBtn = container.querySelector("#create-profile");
-  const usernameInput = container.querySelector("#username");
-  const usernameErrorEl = container.querySelector("#username-error");
-  const errorEl = container.querySelector("#profile-error");
 
   let allPokemon = [];
   let selected = null;
@@ -79,13 +88,13 @@ export async function renderProfile(container, { onProfileCreated }) {
     usernameErrorEl.textContent = message ?? "";
   }
 
-  function setError(message) {
-    errorEl.textContent = message ?? "";
+  function setPokemonError(message) {
+    pokemonErrorEl.textContent = message ?? "";
   }
 
   function clearErrors() {
     setUsernameError("");
-    setError("");
+    setPokemonError("");
   }
 
   function selectFavorite(pokemon) {
@@ -100,14 +109,46 @@ export async function renderProfile(container, { onProfileCreated }) {
     preview.hidden = false;
     listEl.innerHTML = "";
     searchInput.value = selected.name;
-    setError("");
+    setPokemonError("");
+  }
+
+  function renderSuggestions(query) {
+    listEl.innerHTML = "";
+    if (!query) return;
+
+    const matches = allPokemon
+      .filter((pokemon) => pokemon.name.startsWith(query))
+      .slice(0, MAX_SUGGESTIONS);
+
+    for (const match of matches) {
+      const li = document.createElement("li");
+      li.textContent = match.name;
+      li.tabIndex = 0;
+      li.addEventListener("click", () => {
+        void choosePokemon(match.name);
+      });
+      listEl.appendChild(li);
+    }
+  }
+
+  async function choosePokemon(name) {
+    try {
+      setPokemonError("");
+      const pokemon = await apiGetPokemon(name);
+      selectFavorite(pokemon);
+    } catch {
+      setPokemonError("Could not load that Pokémon. Try another one.");
+    }
   }
 
   try {
     allPokemon = await apiGetPokemonList();
   } catch {
-    setError("Could not load Pokémon list. Check your connection and reload.");
+    setPokemonError(
+      "Could not load Pokémon list. Check your connection and reload.",
+    );
     searchInput.disabled = true;
+    createBtn.disabled = true;
     return;
   }
 
@@ -116,45 +157,23 @@ export async function renderProfile(container, { onProfileCreated }) {
   });
 
   searchInput.addEventListener("input", () => {
-    const val = normalizeSearch(searchInput.value);
-    listEl.innerHTML = "";
-    if (!val) return;
-
-    const matches = allPokemon
-      .filter((p) => p.name.startsWith(val))
-      .slice(0, MAX_SUGGESTIONS);
-
-    for (const p of matches) {
-      const li = document.createElement("li");
-      li.textContent = p.name;
-      li.tabIndex = 0;
-      li.addEventListener("click", async () => {
-        try {
-          setError("");
-          const pokemon = await apiGetPokemon(p.name);
-          selectFavorite(pokemon);
-        } catch {
-          setError("Could not load that Pokémon. Try another one.");
-        }
-      });
-      listEl.appendChild(li);
-    }
+    setPokemonError("");
+    renderSuggestions(normalizeSearch(searchInput.value));
   });
 
   createBtn.addEventListener("click", () => {
     clearErrors();
+
     const username = usernameInput.value.trim();
     const usernameError = validateUsername(username);
     if (usernameError) {
       setUsernameError(usernameError);
       return;
     }
-    if (!selected) {
-      setError("Select a favorite Pokémon.");
-      return;
-    }
-    if (!selected.image) {
-      setError("That Pokémon has no image. Pick another one.");
+
+    const favoriteError = validateFavorite(selected);
+    if (favoriteError) {
+      setPokemonError(favoriteError);
       return;
     }
 
@@ -164,6 +183,15 @@ export async function renderProfile(container, { onProfileCreated }) {
       name: selected.name,
       image: selected.image,
     });
-    onProfileCreated();
+    onProfileCreated(getCreatedSession(username, selected));
   });
+}
+
+function getCreatedSession(username, selected) {
+  return {
+    username,
+    id: selected.id,
+    name: selected.name,
+    image: selected.image,
+  };
 }

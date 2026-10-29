@@ -1,10 +1,6 @@
 import { clearSession } from "../services/session.js";
 
-/**
- * Stub de la pantalla de juego: muestra sesión y permite cerrarla.
- * La lógica del Memory se añadirá después.
- */
-export function renderGame(container, session, { onLogout }) {
+export function renderGame(container, { session, onLogout }) {
   container.innerHTML = `
     <div class="game-page">
       <header class="game-header">
@@ -28,6 +24,7 @@ export function renderGame(container, session, { onLogout }) {
   const avatar = container.querySelector("#player-avatar");
   avatar.src = session.image;
   avatar.alt = session.name;
+
   container.querySelector("#player-username").textContent = session.username;
   container.querySelector("#player-favorite").textContent = session.name;
 

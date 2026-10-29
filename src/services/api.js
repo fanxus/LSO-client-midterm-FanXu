@@ -1,22 +1,19 @@
 const BASE_URL = "https://pokeapi.co/api/v2/pokemon";
 
-export async function apiGetPokemon(pokemonName) {
-  const response = await fetch(
-    `${BASE_URL}/${encodeURIComponent(pokemonName)}`,
-  );
+async function fetchJson(url) {
+  const response = await fetch(url);
   if (!response.ok) {
-    throw new Error("Failed to fetch pokemon");
+    throw new Error(`Request failed: ${response.status}`);
   }
-  return await response.json();
+  return response.json();
+}
+
+export async function apiGetPokemon(pokemonName) {
+  return fetchJson(`${BASE_URL}/${encodeURIComponent(pokemonName)}`);
 }
 
 export async function apiGetPokemonList() {
-  const first = await fetch(`${BASE_URL}?limit=1`);
-  const meta = await first.json();
-  const total = meta.count;
-
-  const response = await fetch(`${BASE_URL}?limit=${total}`);
-  if (!response.ok) throw new Error("Failed to fetch list");
-  const data = await response.json();
+  const meta = await fetchJson(`${BASE_URL}?limit=1`);
+  const data = await fetchJson(`${BASE_URL}?limit=${meta.count}`);
   return data.results;
 }
