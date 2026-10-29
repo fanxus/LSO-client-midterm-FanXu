@@ -43,6 +43,136 @@ p {
   margin: 0;
 }
 
+/* ——— Perfil ——— */
+.profile-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 32px 20px;
+  width: 100%;
+}
+
+.profile-subtitle {
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.profile-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.profile-field input {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  font-weight: 400;
+  background: var(--surface);
+}
+
+.pokemon-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  max-height: 220px;
+  overflow: auto;
+}
+
+.pokemon-list:empty {
+  display: none;
+}
+
+.pokemon-list li {
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  text-transform: capitalize;
+}
+
+.pokemon-list li:last-child {
+  border-bottom: none;
+}
+
+.pokemon-list li:hover,
+.pokemon-list li:focus {
+  background: var(--bg);
+  outline: none;
+}
+
+.favorite-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.favorite-preview[hidden] {
+  display: none;
+}
+
+.favorite-preview img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+}
+
+.favorite-preview p {
+  text-transform: capitalize;
+  font-weight: 600;
+}
+
+.field-error,
+.profile-error {
+  color: var(--error);
+  min-height: 1.2em;
+  font-size: 0.85rem;
+  font-weight: 400;
+  margin: 0;
+}
+
+.game-player {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.game-player-avatar {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  background: var(--surface);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.game-player h1 {
+  text-transform: none;
+  font-size: 1.25rem;
+}
+
+.game-stats span {
+  text-transform: capitalize;
+}
+
+.game-placeholder {
+  color: var(--text-muted);
+  padding: 40px 0;
+  text-align: center;
+}
+
 /* ——— Botones ——— */
 .btn {
   padding: 10px 16px;
