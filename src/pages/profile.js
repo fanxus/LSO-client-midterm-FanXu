@@ -63,6 +63,32 @@ export async function renderProfile(container, { onProfileCreated }) {
       <div id="favorite-preview" class="favorite-preview" hidden>
         <img id="favorite-img" alt="" />
         <p id="favorite-name"></p>
+        <button
+          type="button"
+          class="icon-btn"
+          id="clear-favorite"
+          aria-label="Remove favorite Pokémon"
+          title="Remove"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M3 6h18" />
+            <path d="M8 6V4h8v2" />
+            <path d="M19 6l-1 14H6L5 6" />
+            <path d="M10 11v6" />
+            <path d="M14 11v6" />
+          </svg>
+        </button>
       </div>
 
       <button type="button" class="btn" id="create-profile">
@@ -79,6 +105,7 @@ export async function renderProfile(container, { onProfileCreated }) {
   const preview = container.querySelector("#favorite-preview");
   const favoriteImg = container.querySelector("#favorite-img");
   const favoriteName = container.querySelector("#favorite-name");
+  const clearFavoriteBtn = container.querySelector("#clear-favorite");
   const createBtn = container.querySelector("#create-profile");
 
   let allPokemon = [];
@@ -110,6 +137,18 @@ export async function renderProfile(container, { onProfileCreated }) {
     listEl.innerHTML = "";
     searchInput.value = selected.name;
     setPokemonError("");
+  }
+
+  function clearFavorite() {
+    selected = null;
+    favoriteImg.src = "";
+    favoriteImg.alt = "";
+    favoriteName.textContent = "";
+    preview.hidden = true;
+    searchInput.value = "";
+    listEl.innerHTML = "";
+    setPokemonError("");
+    searchInput.focus();
   }
 
   function renderSuggestions(query) {
@@ -159,6 +198,10 @@ export async function renderProfile(container, { onProfileCreated }) {
   searchInput.addEventListener("input", () => {
     setPokemonError("");
     renderSuggestions(normalizeSearch(searchInput.value));
+  });
+
+  clearFavoriteBtn.addEventListener("click", () => {
+    clearFavorite();
   });
 
   createBtn.addEventListener("click", () => {

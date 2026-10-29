@@ -158,6 +158,27 @@ p {
   border-radius: 8px;
 }
 
+.icon-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.icon-btn:hover {
+  color: var(--error);
+  border-color: var(--error);
+  background: #fef2f2;
+}
+
 .favorite-preview[hidden] {
   display: none;
 }
