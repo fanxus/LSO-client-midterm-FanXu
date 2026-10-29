@@ -2,6 +2,8 @@ import cardBackImg from "../assets/cartapokemon.png";
 import { clearSession } from "../services/session.js";
 import { apiGetPokemonList, apiGetPokemon } from "../services/api.js";
 
+const MAX_CARDS = 32;
+
 export function renderGame(container, { session, onLogout }) {
   container.innerHTML = `
     <div class="game-page">
@@ -20,8 +22,10 @@ export function renderGame(container, { session, onLogout }) {
         </button>
       </header>
 
-      <div class="game-controls">
-        <label>
+      <section id="setup-view" class="setup-view">
+        <h2>Start a game</h2>
+        <p class="setup-hint">Choose how many cards to begin with</p>
+        <label class="setup-field">
           Cards
           <select id="card-count">
             <option value="4">4</option>
@@ -33,39 +37,52 @@ export function renderGame(container, { session, onLogout }) {
           </select>
         </label>
         <button type="button" class="btn" id="start-game">Start</button>
-        <button
-          type="button"
-          class="icon-btn"
-          id="reset-game"
-          aria-label="Reset"
-          title="Reset"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
+        <p id="setup-error" class="field-error"></p>
+      </section>
+
+      <section id="play-view" class="play-view" hidden>
+        <div class="play-toolbar">
+          <button type="button" class="btn btn-secondary" id="menu-btn">
+            Menu
+          </button>
+          <button type="button" class="btn" id="next-level" hidden>
+            Next level
+          </button>
+          <button
+            type="button"
+            class="icon-btn"
+            id="reset-game"
+            aria-label="Reset"
+            title="Reset"
           >
-            <path d="M21 12a9 9 0 1 1-2.6-6.4" />
-            <polyline points="21 3 21 9 15 9" />
-          </svg>
-        </button>
-      </div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M21 12a9 9 0 1 1-2.6-6.4" />
+              <polyline points="21 3 21 9 15 9" />
+            </svg>
+          </button>
+        </div>
 
-      <div class="game-stats">
-        <span id="timer">0m 0s</span>
-        <span id="score">Points: 0</span>
-        <span id="game-status"></span>
-      </div>
-      <p id="game-error" class="field-error"></p>
+        <div class="game-stats">
+          <span id="round">Round: 1</span>
+          <span id="timer">0m 0s</span>
+          <span id="score">Points: 0</span>
+          <span id="game-status"></span>
+        </div>
+        <p id="game-error" class="field-error"></p>
 
-      <div id="memory-board" class="memory-board"></div>
+        <div id="memory-board" class="memory-board"></div>
+      </section>
     </div>
   `;
 
@@ -81,14 +98,20 @@ export function renderGame(container, { session, onLogout }) {
     onLogout();
   });
 
+  const setupView = container.querySelector("#setup-view");
+  const playView = container.querySelector("#play-view");
   const boardEl = container.querySelector("#memory-board");
   const startBtn = container.querySelector("#start-game");
+  const menuBtn = container.querySelector("#menu-btn");
+  const nextLevelBtn = container.querySelector("#next-level");
   const resetBtn = container.querySelector("#reset-game");
   const cardCountInput = container.querySelector("#card-count");
+  const roundEl = container.querySelector("#round");
   const timerEl = container.querySelector("#timer");
   const scoreEl = container.querySelector("#score");
   const statusEl = container.querySelector("#game-status");
   const errorEl = container.querySelector("#game-error");
+  const setupErrorEl = container.querySelector("#setup-error");
 
   let allPokemon = [];
   let firstCard = null;
@@ -99,6 +122,24 @@ export function renderGame(container, { session, onLogout }) {
   let totalPairs = 0;
   let timerId = null;
   let seconds = 0;
+  let round = 1;
+  let currentCards = 0;
+  let startCards = 0;
+
+  function showSetup() {
+    stopTimer();
+    boardEl.innerHTML = "";
+    nextLevelBtn.hidden = true;
+    statusEl.textContent = "";
+    errorEl.textContent = "";
+    setupView.hidden = false;
+    playView.hidden = true;
+  }
+
+  function showPlay() {
+    setupView.hidden = true;
+    playView.hidden = false;
+  }
 
   function setError(msg) {
     errorEl.textContent = msg || "";
@@ -106,6 +147,10 @@ export function renderGame(container, { session, onLogout }) {
 
   function updateScore() {
     scoreEl.textContent = `Points: ${points}`;
+  }
+
+  function updateRound() {
+    roundEl.textContent = `Round: ${round}`;
   }
 
   function formatTime(totalSeconds) {
@@ -135,20 +180,6 @@ export function renderGame(container, { session, onLogout }) {
     firstCard = null;
     secondCard = null;
     lockBoard = false;
-  }
-
-  function clearBoard() {
-    stopTimer();
-    boardEl.innerHTML = "";
-    points = 0;
-    matched = 0;
-    totalPairs = 0;
-    seconds = 0;
-    timerEl.textContent = "0m 0s";
-    statusEl.textContent = "";
-    updateScore();
-    resetSelection();
-    setError("");
   }
 
   function shuffle(list) {
@@ -202,8 +233,7 @@ export function renderGame(container, { session, onLogout }) {
       resetSelection();
 
       if (matched === totalPairs) {
-        stopTimer();
-        statusEl.textContent = "You win!";
+        finishRound();
       }
     } else {
       setTimeout(() => {
@@ -214,21 +244,61 @@ export function renderGame(container, { session, onLogout }) {
     }
   }
 
-  async function startGame() {
+  function finishRound() {
+    stopTimer();
+    lockBoard = true;
+
+    const nextCards = currentCards * 2;
+    if (nextCards > MAX_CARDS) {
+      statusEl.textContent = "You cleared all rounds!";
+      nextLevelBtn.hidden = true;
+      return;
+    }
+
+    statusEl.textContent = `Round complete! Next level: ${nextCards} cards`;
+    nextLevelBtn.hidden = false;
+  }
+
+  function goNextLevel() {
+    const nextCards = currentCards * 2;
+    if (nextCards > MAX_CARDS) return;
+
+    round += 1;
+    currentCards = nextCards;
+    nextLevelBtn.hidden = true;
+    void playRound(currentCards);
+  }
+
+  async function playRound(cardCount) {
     setError("");
     statusEl.textContent = "";
-
-    const cardCount = Number(cardCountInput.value);
-
-    clearBoard();
+    nextLevelBtn.hidden = true;
+    stopTimer();
+    boardEl.innerHTML = "";
+    matched = 0;
     totalPairs = cardCount / 2;
+    resetSelection();
+    updateRound();
+    updateScore();
+    showPlay();
 
     try {
       if (allPokemon.length === 0) {
         allPokemon = await apiGetPokemonList();
       }
 
-      const chosen = shuffle(allPokemon).slice(0, totalPairs);
+      const includeFavorite = Math.random() < 0.25;
+      let pool = allPokemon;
+
+      if (includeFavorite) {
+        pool = allPokemon.filter((p) => p.name !== session.name);
+      }
+
+      const chosen = shuffle(pool).slice(
+        0,
+        includeFavorite ? totalPairs - 1 : totalPairs,
+      );
+
       const withImages = await Promise.all(
         chosen.map(async (p) => {
           const data = await apiGetPokemon(p.name);
@@ -240,23 +310,54 @@ export function renderGame(container, { session, onLogout }) {
         }),
       );
 
+      if (includeFavorite) {
+        withImages.push({
+          id: session.id,
+          name: session.name,
+          image: session.image,
+        });
+      }
+
       const deck = shuffle([...withImages, ...withImages]);
       for (const pokemon of deck) {
         boardEl.appendChild(createCard(pokemon));
       }
 
       startTimer();
-      updateScore();
     } catch {
       setError("Could not load Pokémon. Try again.");
     }
   }
 
+  function startGame() {
+    setupErrorEl.textContent = "";
+    round = 1;
+    points = 0;
+    startCards = Number(cardCountInput.value);
+    currentCards = startCards;
+    void playRound(currentCards);
+  }
+
+  function restartGame() {
+    round = 1;
+    points = 0;
+    currentCards = startCards || Number(cardCountInput.value);
+    void playRound(currentCards);
+  }
+
   startBtn.addEventListener("click", () => {
-    void startGame();
+    startGame();
+  });
+
+  menuBtn.addEventListener("click", () => {
+    showSetup();
+  });
+
+  nextLevelBtn.addEventListener("click", () => {
+    goNextLevel();
   });
 
   resetBtn.addEventListener("click", () => {
-    void startGame();
+    restartGame();
   });
 }

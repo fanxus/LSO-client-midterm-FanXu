@@ -256,28 +256,54 @@ p {
   text-transform: capitalize;
 }
 
-.game-controls {
+.setup-view {
   display: flex;
-  flex-wrap: wrap;
-  align-items: end;
-  gap: 12px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  max-width: 320px;
+  padding: 8px 0;
 }
 
-.game-controls label {
+.setup-view[hidden],
+.play-view[hidden] {
+  display: none;
+}
+
+.setup-hint {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.setup-field {
   display: flex;
   flex-direction: column;
   gap: 4px;
   font-size: 0.9rem;
   font-weight: 600;
+  width: 100%;
 }
 
-.game-controls select {
+.setup-field select {
   padding: 8px 10px;
   border: 1px solid var(--border);
   border-radius: 6px;
   font: inherit;
-  width: 120px;
+  width: 100%;
   background: var(--surface);
+}
+
+.play-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.play-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
 }
 
 .memory-board {
