@@ -32,8 +32,10 @@ function validateFavorite(selected) {
 export async function renderProfile(container, { onProfileCreated }) {
   container.innerHTML = `
     <div class="profile-page">
-      <h1>PokeMemory</h1>
-      <p class="profile-subtitle">Create your player profile</p>
+      <header class="profile-brand">
+        <h1 class="brand-title">Poke<span>Memory</span></h1>
+        <p class="profile-subtitle">Create your player profile</p>
+      </header>
 
       <div class="profile-field">
         <label for="username">Username</label>
