@@ -2,7 +2,7 @@
 
 **Alumno:** Fan Xu  
 **Demo:** [https://lso-client-midterm-fan-xu.vercel.app](https://lso-client-midterm-fan-xu.vercel.app)  
-**Vídeo:** *(añadir enlace de YouTube)*
+**Vídeo:** [https://youtu.be/2-jlQhy8ruk](https://youtu.be/2-jlQhy8ruk)
 
 ## Descripción
 
