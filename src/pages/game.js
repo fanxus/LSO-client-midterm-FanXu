@@ -1,7 +1,12 @@
 import cardBackImg from "../assets/cartapokemon.png";
 import { clearSession } from "../services/session.js";
 import { apiGetPokemonList, apiGetPokemon } from "../services/api.js";
-import { getLeaderboard, saveScore } from "../services/leaderboard.js";
+import {
+  getLeaderboard,
+  saveResult,
+  getRankingView,
+  formatRankTime,
+} from "../services/leaderboard.js";
 
 const MAX_CARDS = 32;
 
@@ -39,22 +44,6 @@ export function renderGame(container, { session, onLogout }) {
         </label>
         <button type="button" class="btn" id="start-game">Start</button>
         <p id="setup-error" class="field-error"></p>
-
-        <div class="leaderboard">
-          <h3>Leaderboard</h3>
-          <ol id="leaderboard-list" class="leaderboard-list"></ol>
-          <button
-            type="button"
-            class="btn btn-secondary"
-            id="leaderboard-load-more"
-            hidden
-          >
-            Load more
-          </button>
-          <p id="leaderboard-empty" class="leaderboard-empty" hidden>
-            No scores yet. Be the first!
-          </p>
-        </div>
       </section>
 
       <section id="play-view" class="play-view" hidden>
@@ -100,6 +89,28 @@ export function renderGame(container, { session, onLogout }) {
 
         <div id="memory-board" class="memory-board"></div>
       </section>
+
+      <section class="leaderboard" aria-label="Ranking">
+        <h3>Ranking</h3>
+        <div class="leaderboard-table-wrap">
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th scope="col">Pos</th>
+                <th scope="col">Player</th>
+                <th scope="col">Pokémon</th>
+                <th scope="col">Time</th>
+                <th scope="col">Cards</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-body"></tbody>
+          </table>
+        </div>
+        <p id="leaderboard-omitted" class="leaderboard-omitted" hidden></p>
+        <p id="leaderboard-empty" class="leaderboard-empty" hidden>
+          No results yet.
+        </p>
+      </section>
     </div>
   `;
 
@@ -111,6 +122,7 @@ export function renderGame(container, { session, onLogout }) {
 
   container.querySelector("#logout").addEventListener("click", () => {
     stopTimer();
+    clearFlipTimeout();
     clearSession();
     onLogout();
   });
@@ -129,12 +141,9 @@ export function renderGame(container, { session, onLogout }) {
   const statusEl = container.querySelector("#game-status");
   const errorEl = container.querySelector("#game-error");
   const setupErrorEl = container.querySelector("#setup-error");
-  const leaderboardList = container.querySelector("#leaderboard-list");
+  const leaderboardBody = container.querySelector("#leaderboard-body");
   const leaderboardEmpty = container.querySelector("#leaderboard-empty");
-  const loadMoreBtn = container.querySelector("#leaderboard-load-more");
-
-  const RANK_MEDALS = ["🥇", "🥈", "🥉"];
-  const LEADERBOARD_PAGE_SIZE = 5;
+  const leaderboardOmitted = container.querySelector("#leaderboard-omitted");
 
   let allPokemon = [];
   let firstCard = null;
@@ -144,78 +153,117 @@ export function renderGame(container, { session, onLogout }) {
   let matched = 0;
   let totalPairs = 0;
   let timerId = null;
+  let flipTimeoutId = null;
   let seconds = 0;
   let round = 1;
   let currentCards = 0;
   let startCards = 0;
-  let leaderboardVisible = LEADERBOARD_PAGE_SIZE;
+  let latestResultId = null;
+  let resultSavedForRound = false;
 
-  function createLeaderboardItem(entry, index) {
-    const li = document.createElement("li");
-    const place = index + 1;
-    const medal = RANK_MEDALS[index];
+  function createLeaderboardRow(row, { showGapBefore = false } = {}) {
+    const fragment = document.createDocumentFragment();
 
-    li.className = "leaderboard-item";
-    if (place <= 3) {
-      li.classList.add(`leaderboard-place-${place}`);
+    if (showGapBefore) {
+      const gap = document.createElement("tr");
+      gap.className = "leaderboard-gap";
+      gap.innerHTML = `<td colspan="5">… omitted results …</td>`;
+      fragment.appendChild(gap);
     }
 
-    li.innerHTML = `
-      <span class="leaderboard-rank">${medal || place}</span>
-      <img
-        class="leaderboard-avatar"
-        src="${entry.image}"
-        alt=""
-      />
-      <div class="leaderboard-info">
-        <span class="leaderboard-name"></span>
-        <span class="leaderboard-meta">Round ${entry.round}</span>
-      </div>
-      <span class="leaderboard-points">${entry.points} pts</span>
+    const tr = document.createElement("tr");
+    tr.className = "leaderboard-row";
+    if (row.highlighted) {
+      tr.classList.add("leaderboard-row-latest");
+    }
+
+    tr.innerHTML = `
+      <td class="leaderboard-pos">${row.position}</td>
+      <td class="leaderboard-player"></td>
+      <td class="leaderboard-pokemon">
+        <span class="leaderboard-pokemon-cell">
+          <img class="leaderboard-avatar" alt="" />
+          <span class="leaderboard-favorite"></span>
+        </span>
+      </td>
+      <td class="leaderboard-time"></td>
+      <td class="leaderboard-cards"></td>
     `;
-    li.querySelector(".leaderboard-name").textContent = entry.username;
-    li.querySelector(".leaderboard-avatar").alt = entry.username;
-    return li;
+
+    tr.querySelector(".leaderboard-player").textContent = row.entry.username;
+    tr.querySelector(".leaderboard-favorite").textContent = row.entry.favorite;
+    tr.querySelector(".leaderboard-time").textContent = formatRankTime(
+      row.entry.time,
+    );
+    tr.querySelector(".leaderboard-cards").textContent = String(row.entry.cards);
+
+    const img = tr.querySelector(".leaderboard-avatar");
+    if (row.entry.favoriteImage) {
+      img.src = row.entry.favoriteImage;
+      img.alt = row.entry.favorite;
+    } else {
+      img.hidden = true;
+    }
+
+    fragment.appendChild(tr);
+    return fragment;
   }
 
   function renderLeaderboard() {
     const entries = getLeaderboard();
-    leaderboardList.innerHTML = "";
+    leaderboardBody.innerHTML = "";
+    leaderboardOmitted.hidden = true;
+    leaderboardOmitted.textContent = "";
 
     if (entries.length === 0) {
       leaderboardEmpty.hidden = false;
-      loadMoreBtn.hidden = true;
       return;
     }
 
     leaderboardEmpty.hidden = true;
+    const view = getRankingView(entries, latestResultId, 5);
 
-    const visible = entries.slice(0, leaderboardVisible);
-    for (let i = 0; i < visible.length; i += 1) {
-      leaderboardList.appendChild(createLeaderboardItem(visible[i], i));
+    view.rows.forEach((row, index) => {
+      const showGapBefore =
+        Boolean(view.gapBeforeHighlight) && index === view.rows.length - 1;
+      leaderboardBody.appendChild(createLeaderboardRow(row, { showGapBefore }));
+    });
+
+    if (view.omittedCount > 0) {
+      leaderboardOmitted.hidden = false;
+      leaderboardOmitted.textContent = `${view.omittedCount} more result${
+        view.omittedCount === 1 ? "" : "s"
+      } omitted.`;
     }
-
-    loadMoreBtn.hidden = leaderboardVisible >= entries.length;
   }
 
-  function persistScore() {
-    saveScore({
+  function persistCompletedGame() {
+    if (resultSavedForRound) return;
+
+    const saved = saveResult({
       username: session.username,
-      image: session.image,
-      points,
-      round,
+      favorite: session.name,
+      favoriteImage: session.image,
+      time: seconds,
+      cards: currentCards,
     });
+
+    if (!saved) return;
+
+    resultSavedForRound = true;
+    latestResultId = saved.id;
+    renderLeaderboard();
   }
 
   function showSetup() {
     stopTimer();
+    clearFlipTimeout();
     boardEl.innerHTML = "";
     nextLevelBtn.hidden = true;
     statusEl.textContent = "";
     errorEl.textContent = "";
     setupView.hidden = false;
     playView.hidden = true;
-    leaderboardVisible = LEADERBOARD_PAGE_SIZE;
     renderLeaderboard();
   }
 
@@ -237,15 +285,20 @@ export function renderGame(container, { session, onLogout }) {
   }
 
   function formatTime(totalSeconds) {
-    const m = Math.floor(totalSeconds / 60);
-    const s = totalSeconds % 60;
-    return `${m}m ${s}s`;
+    return formatRankTime(totalSeconds);
   }
 
   function stopTimer() {
     if (timerId) {
       clearInterval(timerId);
       timerId = null;
+    }
+  }
+
+  function clearFlipTimeout() {
+    if (flipTimeoutId) {
+      clearTimeout(flipTimeoutId);
+      flipTimeoutId = null;
     }
   }
 
@@ -319,9 +372,13 @@ export function renderGame(container, { session, onLogout }) {
         finishRound();
       }
     } else {
-      setTimeout(() => {
-        firstCard.classList.remove("girada");
-        secondCard.classList.remove("girada");
+      const pendingFirst = firstCard;
+      const pendingSecond = secondCard;
+      clearFlipTimeout();
+      flipTimeoutId = setTimeout(() => {
+        pendingFirst.classList.remove("girada");
+        pendingSecond.classList.remove("girada");
+        flipTimeoutId = null;
         resetSelection();
       }, 800);
     }
@@ -330,16 +387,16 @@ export function renderGame(container, { session, onLogout }) {
   function finishRound() {
     stopTimer();
     lockBoard = true;
-    persistScore();
+    persistCompletedGame();
 
     const nextCards = currentCards * 2;
     if (nextCards > MAX_CARDS) {
-      statusEl.textContent = "You cleared all rounds!";
+      statusEl.textContent = "Game complete! Result saved to ranking.";
       nextLevelBtn.hidden = true;
       return;
     }
 
-    statusEl.textContent = `Round complete! Next level: ${nextCards} cards`;
+    statusEl.textContent = `Game complete! Result saved. Next level: ${nextCards} cards`;
     nextLevelBtn.hidden = false;
   }
 
@@ -358,9 +415,11 @@ export function renderGame(container, { session, onLogout }) {
     statusEl.textContent = "";
     nextLevelBtn.hidden = true;
     stopTimer();
+    clearFlipTimeout();
     boardEl.innerHTML = "";
     matched = 0;
     totalPairs = cardCount / 2;
+    resultSavedForRound = false;
     resetSelection();
     updateRound();
     updateScore();
@@ -434,7 +493,6 @@ export function renderGame(container, { session, onLogout }) {
   });
 
   menuBtn.addEventListener("click", () => {
-    if (points > 0) persistScore();
     showSetup();
   });
 
@@ -444,11 +502,6 @@ export function renderGame(container, { session, onLogout }) {
 
   resetBtn.addEventListener("click", () => {
     restartGame();
-  });
-
-  loadMoreBtn.addEventListener("click", () => {
-    leaderboardVisible += LEADERBOARD_PAGE_SIZE;
-    renderLeaderboard();
   });
 
   renderLeaderboard();
