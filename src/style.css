@@ -333,6 +333,49 @@ h3 {
   text-transform: capitalize;
 }
 
+.game-status {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  border: 2px solid #86efac;
+  background: linear-gradient(180deg, #f0fdf4 0%, #dcfce7 100%);
+  color: #14532d;
+  box-shadow: var(--shadow);
+}
+
+.game-status[hidden] {
+  display: none;
+}
+
+.game-status-final {
+  border-color: var(--poke-yellow);
+  background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
+  color: #78350f;
+}
+
+.game-status-title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.game-status-detail {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.game-status-hint {
+  font-size: 0.9rem;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
 .setup-view {
   display: flex;
   flex-direction: column;

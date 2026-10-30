@@ -6,13 +6,13 @@
 
 ## Descripción
 
-Aplicación web del clásico Memory con temática Pokémon. Sin frameworks de frontend: HTML, CSS y JavaScript con Vite. Los datos salen de [PokeAPI](https://pokeapi.co/).
+Aplicación web del clásico Memory con temática Pokémon. Sin frameworks de frontend: HTML, CSS y JavaScript con Vite. Los datos se consumen desde [PokeAPI](https://pokeapi.co/).
 
 ## Funcionalidades
 
-- Perfil de jugador (username + Pokémon favorito) en `sessionStorage`
+- Perfil de jugador en `sessionStorage`
 - Partida Memory: tablero, flip, temporizador y reinicio
-- Ranking de partidas en `localStorage` (cartas → tiempo)
+- Ranking de partidas en `localStorage`
 
 ## Cómo ejecutar
 

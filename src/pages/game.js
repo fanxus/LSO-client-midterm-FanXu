@@ -83,8 +83,14 @@ export function renderGame(container, { session, onLogout }) {
           <span id="round">Round: 1</span>
           <span id="timer">0m 0s</span>
           <span id="score">Points: 0</span>
-          <span id="game-status"></span>
         </div>
+        <div
+          id="game-status"
+          class="game-status"
+          role="status"
+          aria-live="polite"
+          hidden
+        ></div>
         <p id="game-error" class="field-error"></p>
 
         <div id="memory-board" class="memory-board"></div>
@@ -255,12 +261,36 @@ export function renderGame(container, { session, onLogout }) {
     renderLeaderboard();
   }
 
+  function clearStatus() {
+    statusEl.hidden = true;
+    statusEl.classList.remove("game-status-win", "game-status-final");
+    statusEl.innerHTML = "";
+  }
+
+  function showVictoryStatus({ final = false, nextCards = null } = {}) {
+    statusEl.hidden = false;
+    statusEl.classList.add("game-status-win");
+    statusEl.classList.toggle("game-status-final", final);
+
+    const nextHint = final
+      ? "No more levels — you finished the run."
+      : `Ready for the next level (${nextCards} cards).`;
+
+    statusEl.innerHTML = `
+      <p class="game-status-title">${final ? "You win!" : "Level cleared!"}</p>
+      <p class="game-status-detail">
+        Time ${formatTime(seconds)} · ${points} points · Saved to ranking
+      </p>
+      <p class="game-status-hint">${nextHint}</p>
+    `;
+  }
+
   function showSetup() {
     stopTimer();
     clearFlipTimeout();
     boardEl.innerHTML = "";
     nextLevelBtn.hidden = true;
-    statusEl.textContent = "";
+    clearStatus();
     errorEl.textContent = "";
     setupView.hidden = false;
     playView.hidden = true;
@@ -391,12 +421,12 @@ export function renderGame(container, { session, onLogout }) {
 
     const nextCards = currentCards * 2;
     if (nextCards > MAX_CARDS) {
-      statusEl.textContent = "Game complete! Result saved to ranking.";
+      showVictoryStatus({ final: true });
       nextLevelBtn.hidden = true;
       return;
     }
 
-    statusEl.textContent = `Game complete! Result saved. Next level: ${nextCards} cards`;
+    showVictoryStatus({ nextCards });
     nextLevelBtn.hidden = false;
   }
 
@@ -412,7 +442,7 @@ export function renderGame(container, { session, onLogout }) {
 
   async function playRound(cardCount) {
     setError("");
-    statusEl.textContent = "";
+    clearStatus();
     nextLevelBtn.hidden = true;
     stopTimer();
     clearFlipTimeout();
