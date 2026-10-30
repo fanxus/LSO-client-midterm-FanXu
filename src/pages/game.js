@@ -1,6 +1,7 @@
 import cardBackImg from "../assets/cartapokemon.png";
 import { clearSession } from "../services/session.js";
 import { apiGetPokemonList, apiGetPokemon } from "../services/api.js";
+import { getLeaderboard, saveScore } from "../services/leaderboard.js";
 
 const MAX_CARDS = 32;
 
@@ -38,6 +39,22 @@ export function renderGame(container, { session, onLogout }) {
         </label>
         <button type="button" class="btn" id="start-game">Start</button>
         <p id="setup-error" class="field-error"></p>
+
+        <div class="leaderboard">
+          <h3>Leaderboard</h3>
+          <ol id="leaderboard-list" class="leaderboard-list"></ol>
+          <button
+            type="button"
+            class="btn btn-secondary"
+            id="leaderboard-load-more"
+            hidden
+          >
+            Load more
+          </button>
+          <p id="leaderboard-empty" class="leaderboard-empty" hidden>
+            No scores yet. Be the first!
+          </p>
+        </div>
       </section>
 
       <section id="play-view" class="play-view" hidden>
@@ -112,6 +129,12 @@ export function renderGame(container, { session, onLogout }) {
   const statusEl = container.querySelector("#game-status");
   const errorEl = container.querySelector("#game-error");
   const setupErrorEl = container.querySelector("#setup-error");
+  const leaderboardList = container.querySelector("#leaderboard-list");
+  const leaderboardEmpty = container.querySelector("#leaderboard-empty");
+  const loadMoreBtn = container.querySelector("#leaderboard-load-more");
+
+  const RANK_MEDALS = ["🥇", "🥈", "🥉"];
+  const LEADERBOARD_PAGE_SIZE = 5;
 
   let allPokemon = [];
   let firstCard = null;
@@ -125,6 +148,64 @@ export function renderGame(container, { session, onLogout }) {
   let round = 1;
   let currentCards = 0;
   let startCards = 0;
+  let leaderboardVisible = LEADERBOARD_PAGE_SIZE;
+
+  function createLeaderboardItem(entry, index) {
+    const li = document.createElement("li");
+    const place = index + 1;
+    const medal = RANK_MEDALS[index];
+
+    li.className = "leaderboard-item";
+    if (place <= 3) {
+      li.classList.add(`leaderboard-place-${place}`);
+    }
+
+    li.innerHTML = `
+      <span class="leaderboard-rank">${medal || place}</span>
+      <img
+        class="leaderboard-avatar"
+        src="${entry.image}"
+        alt=""
+      />
+      <div class="leaderboard-info">
+        <span class="leaderboard-name"></span>
+        <span class="leaderboard-meta">Round ${entry.round}</span>
+      </div>
+      <span class="leaderboard-points">${entry.points} pts</span>
+    `;
+    li.querySelector(".leaderboard-name").textContent = entry.username;
+    li.querySelector(".leaderboard-avatar").alt = entry.username;
+    return li;
+  }
+
+  function renderLeaderboard() {
+    const entries = getLeaderboard();
+    leaderboardList.innerHTML = "";
+
+    if (entries.length === 0) {
+      leaderboardEmpty.hidden = false;
+      loadMoreBtn.hidden = true;
+      return;
+    }
+
+    leaderboardEmpty.hidden = true;
+
+    const visible = entries.slice(0, leaderboardVisible);
+    for (let i = 0; i < visible.length; i += 1) {
+      leaderboardList.appendChild(createLeaderboardItem(visible[i], i));
+    }
+
+    loadMoreBtn.hidden = leaderboardVisible >= entries.length;
+  }
+
+  function persistScore() {
+    saveScore({
+      username: session.username,
+      image: session.image,
+      points,
+      round,
+    });
+  }
 
   function showSetup() {
     stopTimer();
@@ -134,6 +215,8 @@ export function renderGame(container, { session, onLogout }) {
     errorEl.textContent = "";
     setupView.hidden = false;
     playView.hidden = true;
+    leaderboardVisible = LEADERBOARD_PAGE_SIZE;
+    renderLeaderboard();
   }
 
   function showPlay() {
@@ -247,6 +330,7 @@ export function renderGame(container, { session, onLogout }) {
   function finishRound() {
     stopTimer();
     lockBoard = true;
+    persistScore();
 
     const nextCards = currentCards * 2;
     if (nextCards > MAX_CARDS) {
@@ -350,6 +434,7 @@ export function renderGame(container, { session, onLogout }) {
   });
 
   menuBtn.addEventListener("click", () => {
+    if (points > 0) persistScore();
     showSetup();
   });
 
@@ -360,4 +445,11 @@ export function renderGame(container, { session, onLogout }) {
   resetBtn.addEventListener("click", () => {
     restartGame();
   });
+
+  loadMoreBtn.addEventListener("click", () => {
+    leaderboardVisible += LEADERBOARD_PAGE_SIZE;
+    renderLeaderboard();
+  });
+
+  renderLeaderboard();
 }
