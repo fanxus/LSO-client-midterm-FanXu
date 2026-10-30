@@ -11,7 +11,7 @@
   --card-back: #1e3a5f;
   --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
-  font-family: system-ui, 'Segoe UI', sans-serif;
+  font-family: system-ui, "Segoe UI", sans-serif;
   line-height: 1.5;
   color: var(--text);
   background: var(--bg);
@@ -74,6 +74,139 @@ p {
   background: var(--border);
 }
 
+/* ——— Perfil ——— */
+.profile-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 32px 20px;
+  width: 100%;
+}
+
+.profile-subtitle {
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.profile-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.profile-field input {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  font-weight: 400;
+  background: var(--surface);
+}
+
+.field-error {
+  color: var(--error);
+  min-height: 1.2em;
+  font-size: 0.85rem;
+  font-weight: 400;
+  margin: 0;
+}
+
+.pokemon-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  max-height: 220px;
+  overflow: auto;
+}
+
+.pokemon-list:empty {
+  display: none;
+}
+
+.pokemon-list li {
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  text-transform: capitalize;
+}
+
+.pokemon-list li:last-child {
+  border-bottom: none;
+}
+
+.pokemon-list li:hover,
+.pokemon-list li:focus {
+  background: var(--bg);
+  outline: none;
+}
+
+.favorite-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.favorite-preview .icon-btn {
+  margin-left: auto;
+}
+
+.icon-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: #eff6ff;
+}
+
+#clear-favorite:hover {
+  color: var(--error);
+  border-color: var(--error);
+  background: #fef2f2;
+}
+
+.favorite-preview[hidden] {
+  display: none;
+}
+
+.favorite-preview img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+}
+
+.favorite-preview p {
+  text-transform: capitalize;
+  font-weight: 600;
+}
+
+/* ——— Juego ——— */
 .game-page {
   flex: 1;
   display: flex;
@@ -93,11 +226,84 @@ p {
   flex-wrap: wrap;
 }
 
+.game-player {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.game-player-avatar {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  background: var(--surface);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.game-player h1 {
+  font-size: 1.25rem;
+}
+
 .game-stats {
   display: flex;
   gap: 16px;
   color: var(--text-muted);
   font-size: 0.95rem;
+}
+
+.game-stats span {
+  text-transform: capitalize;
+}
+
+.setup-view {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  max-width: 320px;
+  padding: 8px 0;
+}
+
+.setup-view[hidden],
+.play-view[hidden] {
+  display: none;
+}
+
+.setup-hint {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.setup-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  width: 100%;
+}
+
+.setup-field select {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  width: 100%;
+  background: var(--surface);
+}
+
+.play-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.play-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
 }
 
 .memory-board {
@@ -113,60 +319,75 @@ p {
   }
 }
 
-.memory-card {
-  aspect-ratio: 3 / 4;
-  perspective: 800px;
-  cursor: pointer;
-  border: none;
-  padding: 0;
-  background: transparent;
-}
-
-.memory-card-inner {
-  position: relative;
+/* flip de carta (clic, no hover) */
+.carta-box {
   width: 100%;
-  height: 100%;
-  transition: transform 0.4s;
-  transform-style: preserve-3d;
+  aspect-ratio: 3 / 4;
+  position: relative;
+  perspective: 1000px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-.memory-card.flipped .memory-card-inner,
-.memory-card.matched .memory-card-inner {
+.carta-box img {
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+.carta-box.girada .carta,
+.carta-box.adivinado .carta {
   transform: rotateY(180deg);
 }
 
-.memory-card-face {
+.carta {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: all 0.5s linear;
+}
+
+.cara {
   position: absolute;
   inset: 0;
   backface-visibility: hidden;
   border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow);
   overflow: hidden;
-}
-
-.memory-card-back {
-  background: var(--card-back);
-}
-
-.memory-card-front {
+  box-shadow: var(--shadow);
   background: var(--surface);
-  transform: rotateY(180deg);
 }
 
-.memory-card-front img {
+.cara img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
-.memory-card.matched {
+.cara.detras {
+  transform: rotateY(180deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: #fff9e6;
+  border: 2px solid #ffcb05;
+  box-sizing: border-box;
+}
+
+.cara.detras img {
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.carta-box.adivinado {
   pointer-events: none;
-  opacity: 0.7;
 }
 
-.memory-card.matched .memory-card-front {
-  outline: 3px solid var(--success);
+.carta-box.adivinado .cara.detras {
+  background: #ecfdf5;
+  border-color: #16a34a;
 }
